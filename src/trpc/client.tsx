@@ -7,7 +7,9 @@ import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { useState } from 'react';
 import { makeQueryClient } from './query-client';
 import type { AppRouter } from './routers/_app';
+import superjson from 'superjson';
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
+
 let browserQueryClient: QueryClient;
 function getQueryClient() {
   if (typeof window === 'undefined') {
@@ -43,8 +45,18 @@ export function TRPCReactProvider(
     createTRPCClient<AppRouter>({
       links: [
         httpBatchLink({
-          // transformer: superjson, <-- if you use a data transformer
+          transformer: superjson,
           url: getUrl(),
+          // t3 stack에도 이게 있음, 로깅과 디버깅을 위해
+          //           요청 헤더를 동적으로 추가하는 함수.
+          // 여기선 x-trpc-source라는 커스텀 헤더를 추가해요.
+          // 예: nextjs-react 같은 값 넣어서 서버 로그에서 어느 클라이언트에서 호출했는지 확인 가능.
+          // T3 Stack 공식 템플릿에도 들어있음. 디버깅 및 모니터링용.
+          async headers() {
+            const headers = new Headers();
+            headers.set('x-trpc-source', 'nextjs-react');
+            return headers;
+          },
         }),
       ],
     })

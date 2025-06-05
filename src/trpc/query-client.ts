@@ -2,7 +2,8 @@ import {
   defaultShouldDehydrateQuery,
   QueryClient,
 } from '@tanstack/react-query';
-// import superjson from 'superjson';
+import superjson from 'superjson';
+
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -10,13 +11,15 @@ export function makeQueryClient() {
         staleTime: 30 * 1000,
       },
       dehydrate: {
-        // serializeData: superjson.serialize,
+        // data를 직렬화 하려면 Superjson.serialize 사용
+        serializeData: superjson.serialize,
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === 'pending',
       },
       hydrate: {
-        // deserializeData: superjson.deserialize,
+        // 데이터를 역 직렬화함.
+        deserializeData: superjson.deserialize,
       },
     },
   });
