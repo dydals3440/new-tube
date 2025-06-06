@@ -49,6 +49,13 @@ export const videos = pgTable('videos', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   description: text('description'),
+  // Mux 관련 필드 (그들의 비디오 상태가 어떤지 알려줌)
+  muxStatus: text('mux_status'),
+  muxAssetId: text('mux_asset_id').unique(),
+  muxUploadId: text('mux_upload_id').unique(),
+  muxPlaybackId: text('mux_playback_id').unique(),
+  muxTrackId: text('mux_track_id').unique(),
+  muxTrackStatus: text('mux_track_status'),
   // 외래키 아이디 추가 (user.id와 같게)
   userId: uuid('user_id')
     .references(() => users.id, {

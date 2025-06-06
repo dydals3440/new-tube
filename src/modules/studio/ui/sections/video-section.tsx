@@ -65,6 +65,9 @@ export const VideosSectionSuspense = () => {
             {videos.pages
               .flatMap((page) => page.items)
               .map((video) => (
+                // legacyBehavior를 쓰면 테이블행을 링크로 감쌀 수 있음.
+                // 만약 이걸 못쓰는 상황이면 Link를 제거하고, 테이블 행만 남기고,  키를 추가해.
+                // useRouter 사용
                 <Link
                   key={video.id}
                   href={`/studio/videos/${video.id}`}
