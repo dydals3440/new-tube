@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -23,6 +24,10 @@ export const users = pgTable(
   (t) => [uniqueIndex('clerk_id_idx').on(t.clerkId)]
 );
 
+export const userRelations = relations(users, ({ many }) => ({
+  videos: many(videos),
+}));
+
 export const categories = pgTable(
   'categories',
   {
@@ -35,3 +40,46 @@ export const categories = pgTable(
   },
   (t) => [uniqueIndex('name_idx').on(t.name)]
 );
+
+export const categoryRelations = relations(users, ({ many }) => ({
+  videos: many(videos),
+}));
+
+export const videos = pgTable('videos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  description: text('description'),
+  // 외래키 아이디 추가 (user.id와 같게)
+  userId: uuid('user_id')
+    .references(() => users.id, {
+      // 유저 아이디가 삭제되면, 해당 사용자의 모든 비디오도 삭제됨.
+      onDelete: 'cascade',
+    })
+    .notNull(),
+  categoryId: uuid('category_id').references(() => categories.id, {
+    // 카테고리가 제거 된다고 비디오를 지울 필요 없음.
+    // 카테고리는 애초에 필수가 아니므로 null로 설정
+    onDelete: 'set null',
+  }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Drizzle Relations 공식문서 참고
+// relations가 foreign key와 비슷해보이고 references와도 비슷해보임.
+// 테이블 간의 관계를 정의하는 것은 relations 개념과는 다른 수준에서 동작
+// 외래키는 데이터베이스 수준의 제약 조건, 삽입 수정 삭제가 동작할떄마다 검증되며
+// 제약 조건이 위반되면 오류
+// 관계는 더 높은 수준의 추상화 애플리케이션 수준에서 테이블간의 관계정의
+// 이는 데이터베이스 스키마에 어떠한 영향도 미치지 않음, 외래키를 암묵적으로 생성하지도 않음
+// 기본적으로 이것은 관계와 외래키가 함께 사용할 수 있지만, 의존하지 않음. (외래키 없이, 관계 사용 가능 반대도 가능)
+export const videoRelations = relations(videos, ({ one }) => ({
+  user: one(users, {
+    fields: [videos.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [videos.categoryId],
+    references: [categories.id],
+  }),
+}));

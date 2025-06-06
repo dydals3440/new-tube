@@ -1,4 +1,4 @@
-import { StudioLayout } from '@/modules/studio/ui/studio-layout';
+import { StudioLayout } from '@/modules/studio/ui/layouts/studio-layout';
 import React from 'react';
 
 interface LayoutProps {
