@@ -8,8 +8,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ResponsiveModal } from '@/components/responsive-dialog';
 import { StudioUploader } from '@/modules/studio/components/studio-uploader';
+import { useRouter } from 'next/navigation';
 
 export const StudioUploadModal = () => {
+  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -27,6 +29,13 @@ export const StudioUploadModal = () => {
     })
   );
 
+  const onSuccess = () => {
+    if (!create.data?.video.id) return;
+
+    create.reset();
+    router.push(`/studio/videos/${create.data?.video.id}`);
+  };
+
   return (
     <>
       <ResponsiveModal
@@ -35,10 +44,7 @@ export const StudioUploadModal = () => {
         onOpenChange={() => create.reset()}
       >
         {create.data?.url ? (
-          <StudioUploader
-            endPoint={create.data.url}
-            onSuccess={() => create.reset()}
-          />
+          <StudioUploader endPoint={create.data.url} onSuccess={onSuccess} />
         ) : (
           <Loader2Icon />
         )}
