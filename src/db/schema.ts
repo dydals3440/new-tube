@@ -71,7 +71,12 @@ export const videos = pgTable('videos', {
   muxTrackStatus: text('mux_track_status'),
   // AI로도 할 수 있기에 mux 안붙임
   thumbnailUrl: text('thumbnail_url'),
+  // 기술적으로 Url과 Key 필드를 갖은, file이라는 또 다른 엔티티를 만들 수 있음. (단순성위해)
+  // presigned 처럼 앞에 키가 바뀔 수 있기 때문에 의존하지 않기 위해 키를 따로 저장
+  thumbnailKey: text('thumbnail_key'),
   previewUrl: text('preview_url'),
+  // presigned 처럼 앞에 키가 바뀔 수 있기 때문에 의존하지 않기 위해 키를 따로 저장
+  previewKey: text('preview_key'),
   duration: integer('duration').default(0).notNull(),
   visibility: videoVisibility('visibility').default('private').notNull(),
   // 외래키 아이디 추가 (user.id와 같게)

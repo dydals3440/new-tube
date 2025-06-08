@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { LogOutIcon, VideoIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';
-import { StudioSidebarHeader } from '@/modules/studio/components/studio-sidebar/studio-sidebar-header';
+import { StudioSidebarHeader } from '@/modules/studio/ui/components/studio-sidebar/studio-sidebar-header';
 
 export const StudioSidebar = () => {
   const pathname = usePathname();

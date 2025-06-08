@@ -7,8 +7,8 @@ import { Loader2, Loader2Icon, PlusIcon } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ResponsiveModal } from '@/components/responsive-dialog';
-import { StudioUploader } from '@/modules/studio/components/studio-uploader';
 import { useRouter } from 'next/navigation';
+import { StudioUploader } from '@/modules/studio/ui/components/studio-uploader';
 
 export const StudioUploadModal = () => {
   const router = useRouter();
