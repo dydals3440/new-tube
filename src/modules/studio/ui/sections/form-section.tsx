@@ -56,6 +56,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { THUMBNAIL_FALLBACK } from '@/modules/videos/constants';
 import { ThumbnailUploadModal } from '@/modules/studio/ui/components/thumbnail-upload-modal';
+import { ThumbnailGenerateModal } from '@/modules/studio/ui/components/thumbnail-generate-modal';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FormSectionProps {
   videoId: string;
@@ -72,7 +74,56 @@ export const FormSection = ({ videoId }: FormSectionProps) => {
 };
 
 const FormSectionSkeleton = () => {
-  return <div>Loading...</div>;
+  return (
+    <div>
+      <div className='flex items-center justify-between mb-6'>
+        <div className='space-y-2'>
+          <Skeleton className='h-7 w-32' />
+          <Skeleton className='h-4 w-40' />
+        </div>
+        <Skeleton className='h-9 w-24' />
+      </div>
+      <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
+        <div className='space-y-8 lg:col-span-3'>
+          <div className='space-y-2'>
+            <Skeleton className='h-5 w-16' />
+            <Skeleton className='h-10 w-full' />
+          </div>
+          <div className='space-y-2'>
+            <Skeleton className='h-5 w-24' />
+            <Skeleton className='h-[220px] w-full' />
+          </div>
+          <div className='space-y-2'>
+            <Skeleton className='h-5 w-20' />
+            <Skeleton className='h-[84px] w-[153px]' />
+          </div>
+          <div className='space-y-2'>
+            <Skeleton className='h-5 w-20' />
+            <Skeleton className='h-10 w-[153px]' />
+          </div>
+        </div>
+        <div className='flex flex-col gap-y-8 lg:col-span-2'>
+          <div className='flex flex-col gap-4 bg-[#F9F9F9] rounded-xl overflow-hidden'>
+            <Skeleton className='aspect-video' />
+            <div className='px-4 py-4 space-y-6'>
+              <div className='space-y-2'>
+                <Skeleton className='h-4 w-20' />
+                <Skeleton className='h-5 w-full' />
+              </div>
+              <div className='space-y-2'>
+                <Skeleton className='h-4 w-24' />
+                <Skeleton className='h-5 w-32' />
+              </div>
+              <div className='space-y-2'>
+                <Skeleton className='h-4 w-24' />
+                <Skeleton className='h-5 w-32' />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
@@ -81,6 +132,8 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
   const router = useRouter();
 
   const [thumbnailModalOpen, setThumbnailModalOpen] = useState(false);
+  const [thumbnailGenerateModalOpen, setThumbnailGenerateModalOpen] =
+    useState(false);
 
   const { data: video } = useSuspenseQuery(
     trpc.studio.getOne.queryOptions({
@@ -171,17 +224,6 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
     })
   );
 
-  const generateThumbnail = useMutation(
-    trpc.videos.generateThumbnail.mutationOptions({
-      onSuccess: () => {
-        toast.success('Thumbnail generated successfully');
-      },
-      onError: () => {
-        toast.error('Failed to restore thumbnail');
-      },
-    })
-  );
-
   const form = useForm<z.infer<typeof videoUpdateSchema>>({
     resolver: zodResolver(videoUpdateSchema),
     defaultValues: video,
@@ -212,6 +254,11 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
         videoId={videoId}
         open={thumbnailModalOpen}
         onOpenChange={setThumbnailModalOpen}
+      />
+      <ThumbnailGenerateModal
+        videoId={videoId}
+        open={thumbnailGenerateModalOpen}
+        onOpenChange={setThumbnailGenerateModalOpen}
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -354,9 +401,7 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                generateThumbnail.mutate({
-                                  id: videoId,
-                                })
+                                setThumbnailGenerateModalOpen(true)
                               }
                             >
                               <SparkleIcon className='size-4 mr-1' />

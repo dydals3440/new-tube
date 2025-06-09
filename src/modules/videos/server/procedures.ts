@@ -22,20 +22,19 @@ export const videosRouter = createTRPCRouter({
 
       return workflowRunId;
     }),
-  generateTitle: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+  generateThumbnail: protectedProcedure
+    .input(z.object({ id: z.string().uuid(), prompt: z.string().min(10) }))
     .mutation(async ({ ctx, input }) => {
       const { id: userId } = ctx.user;
 
       const { workflowRunId } = await workflow.trigger({
-        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/title`,
-        body: { userId, videoId: input.id },
-        retries: 3,
+        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/thumbnail`,
+        body: { userId, videoId: input.id, prompt: input.prompt },
       });
 
       return workflowRunId;
     }),
-  generateThumbnail: protectedProcedure
+  generateTitle: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { id: userId } = ctx.user;
