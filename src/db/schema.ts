@@ -3,6 +3,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -34,6 +35,7 @@ export const users = pgTable(
 
 export const userRelations = relations(users, ({ many }) => ({
   videos: many(videos),
+  videoViews: many(videoViews),
 }));
 
 export const categories = pgTable(
@@ -107,7 +109,7 @@ export const videoUpdateSchema = createUpdateSchema(videos);
 // 관계는 더 높은 수준의 추상화 애플리케이션 수준에서 테이블간의 관계정의
 // 이는 데이터베이스 스키마에 어떠한 영향도 미치지 않음, 외래키를 암묵적으로 생성하지도 않음
 // 기본적으로 이것은 관계와 외래키가 함께 사용할 수 있지만, 의존하지 않음. (외래키 없이, 관계 사용 가능 반대도 가능)
-export const videoRelations = relations(videos, ({ one }) => ({
+export const videoRelations = relations(videos, ({ one, many }) => ({
   user: one(users, {
     fields: [videos.userId],
     references: [users.id],
@@ -116,4 +118,42 @@ export const videoRelations = relations(videos, ({ one }) => ({
     fields: [videos.categoryId],
     references: [categories.id],
   }),
+  views: many(videoViews),
 }));
+
+export const videoViews = pgTable(
+  'video_views',
+  {
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    videoId: uuid('video_id')
+      .references(() => videos.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    // 복합 기본키 만듬.
+  },
+  (t) => [
+    primaryKey({
+      name: 'video_views_pk',
+      columns: [t.userId, t.videoId],
+    }),
+  ]
+);
+
+// 이 관계유형은 SQL에 영향 안미침 애플리케이션에 영향 미침
+export const videoViewRelations = relations(videoViews, ({ one }) => ({
+  users: one(users, {
+    fields: [videoViews.userId],
+    references: [users.id],
+  }),
+  videos: one(videos, {
+    fields: [videoViews.videoId],
+    references: [videos.id],
+  }),
+}));
+
+export const videoViewSelectSchema = createSelectSchema(videoViews);
+export const videoViewInsertSchema = createInsertSchema(videoViews);
+export const videoViewUpdateSchema = createUpdateSchema(videoViews);

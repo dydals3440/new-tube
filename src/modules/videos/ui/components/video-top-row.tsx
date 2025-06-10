@@ -21,16 +21,16 @@ export const VideoTopRow = ({ video }: VideoTopRowProps) => {
   const compactViews = useMemo(() => {
     return Intl.NumberFormat('en', {
       notation: 'compact',
-    }).format(1000);
-  }, []);
+    }).format(video.viewCount);
+  }, [video.viewCount]);
 
   const expandedViews = useMemo(() => {
     return Intl.NumberFormat('en', {
       notation: 'compact',
-    }).format(1000);
-  }, []);
+    }).format(video.viewCount);
+  }, [video.viewCount]);
 
-  // 솔직히 여기서 많은 메모리 할당은 과투자일수도있음.
+  // 솔직히 여기서 많은 메모리 할당은 과투자일수도있음. (그래도 연습삼아 진행)
   const compactDate = useMemo(() => {
     return format(video.createdAt, 'MMM d, yyyy');
   }, [video.createdAt]);

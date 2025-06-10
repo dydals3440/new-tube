@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { users, videos, videoUpdateSchema } from '@/db/schema';
+import { users, videos, videoUpdateSchema, videoViews } from '@/db/schema';
 import { mux } from '@/lib/mux';
 import {
   baseProcedure,
@@ -24,6 +24,11 @@ export const videosRouter = createTRPCRouter({
           user: {
             ...getTableColumns(users),
           },
+          // videoViews 스키마에서 서브쿼리 가능
+          // 서브쿼리로 사용하기에 이너조인 불필요
+          // 기본적으로 레코드를 단순히 카운트하는 작은 쿼리라면 이 방식도 괜찮
+          // 복잡한 쿼리라면 공통 테이블 표현을 사용해서 조인한 후에 쿼리하는 방식을 선호
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
         })
         .from(videos)
         // 각 비디오에 필요한 저자를 불러오기 위해서
