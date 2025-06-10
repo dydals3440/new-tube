@@ -8,7 +8,8 @@
     "dev:webhook": "ngrok http --url=tiger-able-tightly.ngrok-free.app 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dbml": "bun run dbml.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "6.10.3",
@@ -80,12 +81,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-dbml-generator": "^0.10.0",
     "drizzle-kit": "0.30.3",
     "eslint": "^9",
     "eslint-config-next": "15.1.6",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "tsx": "4.19.2",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   }
 }
