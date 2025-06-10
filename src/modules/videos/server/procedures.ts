@@ -1,14 +1,41 @@
 import { db } from '@/db';
-import { videos, videoUpdateSchema } from '@/db/schema';
+import { users, videos, videoUpdateSchema } from '@/db/schema';
 import { mux } from '@/lib/mux';
-import { createTRPCRouter, protectedProcedure } from '@/trpc/init';
-import { and, eq } from 'drizzle-orm';
+import {
+  baseProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from '@/trpc/init';
+import { and, eq, getTableColumns } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { UTApi } from 'uploadthing/server';
 import { workflow } from '@/lib/workflow';
 
 export const videosRouter = createTRPCRouter({
+  getOne: baseProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ input }) => {
+      const [existingVideo] = await db
+        .select({
+          // ...videos 대신 드리즐은 이렇게 가져옴
+          // 이렇게 해야 유저 정보까지 가져올 수 있음.
+          ...getTableColumns(videos),
+          user: {
+            ...getTableColumns(users),
+          },
+        })
+        .from(videos)
+        // 각 비디오에 필요한 저자를 불러오기 위해서
+        .innerJoin(users, eq(videos.userId, users.id))
+        .where(eq(videos.id, input.id));
+
+      if (!existingVideo) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+
+      return existingVideo;
+    }),
   generateDescription: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {

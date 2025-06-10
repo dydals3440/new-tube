@@ -49,7 +49,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { VideoPlayer } from '@/modules/videos/components/video-player';
+import { VideoPlayer } from '@/modules/videos/ui/components/video-player';
 import Link from 'next/link';
 import { snakeCaseToTile } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
