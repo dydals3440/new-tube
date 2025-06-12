@@ -1,12 +1,18 @@
 import { db } from '@/db';
-import { users, videos, videoUpdateSchema, videoViews } from '@/db/schema';
+import {
+  users,
+  videoReactions,
+  videos,
+  videoUpdateSchema,
+  videoViews,
+} from '@/db/schema';
 import { mux } from '@/lib/mux';
 import {
   baseProcedure,
   createTRPCRouter,
   protectedProcedure,
 } from '@/trpc/init';
-import { and, eq, getTableColumns } from 'drizzle-orm';
+import { and, eq, getTableColumns, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { UTApi } from 'uploadthing/server';
@@ -15,8 +21,35 @@ import { workflow } from '@/lib/workflow';
 export const videosRouter = createTRPCRouter({
   getOne: baseProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const { clerkUserId } = ctx;
+
+      let userId;
+
+      // 데이터베이스의 사용자 ID와 비교해야 하며 직원 사용자 ID와 비교해서는 안됨.
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(inArray(users.clerkId, clerkUserId ? [clerkUserId] : []));
+
+      if (user) {
+        userId = user.id;
+      }
+
+      // 공통 테이블 표현식 (임시 쿼리)
+      // 리액션만 찾음 그리고, 이 비디오 ID에 해당하는 리액션만 조인하게 될 것임.
+      const viewerReactions = db.$with('viewer_reactions').as(
+        db
+          .select({
+            videoId: videoReactions.videoId,
+            type: videoReactions.type,
+          })
+          .from(videoReactions)
+          .where(inArray(videoReactions.userId, userId ? [userId] : []))
+      );
+
       const [existingVideo] = await db
+        .with(viewerReactions)
         .select({
           // ...videos 대신 드리즐은 이렇게 가져옴
           // 이렇게 해야 유저 정보까지 가져올 수 있음.
@@ -29,11 +62,29 @@ export const videosRouter = createTRPCRouter({
           // 기본적으로 레코드를 단순히 카운트하는 작은 쿼리라면 이 방식도 괜찮
           // 복잡한 쿼리라면 공통 테이블 표현을 사용해서 조인한 후에 쿼리하는 방식을 선호
           viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
+          likeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, 'like')
+            )
+          ),
+          dislikeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, 'dislike')
+            )
+          ),
+          viewerReaction: viewerReactions.type,
         })
         .from(videos)
         // 각 비디오에 필요한 저자를 불러오기 위해서
         .innerJoin(users, eq(videos.userId, users.id))
+        // 사용자가 영상에 반응하지 않으면, 해당 레코드가 존재하지 않을 가능성이 있기 때문에 이를 위해 left join 활용
+        .leftJoin(viewerReactions, eq(viewerReactions.videoId, videos.id))
         .where(eq(videos.id, input.id));
+      // .groupBy(videos.id, users.id, viewerReactions.type);
 
       if (!existingVideo) {
         throw new TRPCError({ code: 'NOT_FOUND' });
