@@ -33,7 +33,7 @@ export const VideoReactions = ({
         });
       },
       onError: (error) => {
-        toast.error('Something went wrong');
+        toast.error(error.message);
         if (error.data?.code === 'UNAUTHORIZED') {
           clerk.openSignIn();
         }
@@ -49,7 +49,7 @@ export const VideoReactions = ({
         });
       },
       onError: (error) => {
-        toast.error('Something went wrong');
+        toast.error(error.message);
         if (error.data?.code === 'UNAUTHORIZED') {
           clerk.openSignIn();
         }
