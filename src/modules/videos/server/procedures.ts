@@ -1,5 +1,6 @@
 import { db } from '@/db';
 import {
+  subscriptions,
   users,
   videoReactions,
   videos,
@@ -12,7 +13,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from '@/trpc/init';
-import { and, eq, getTableColumns, inArray } from 'drizzle-orm';
+import { and, eq, getTableColumns, inArray, isNotNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { UTApi } from 'uploadthing/server';
@@ -48,14 +49,30 @@ export const videosRouter = createTRPCRouter({
           .where(inArray(videoReactions.userId, userId ? [userId] : []))
       );
 
+      const viewerSubscriptions = db.$with('viewer_subscriptions').as(
+        db
+          .select()
+          .from(subscriptions)
+          .where(inArray(subscriptions.viewerId, userId ? [userId] : []))
+      );
+
       const [existingVideo] = await db
-        .with(viewerReactions)
+        .with(viewerReactions, viewerSubscriptions)
         .select({
           // ...videos 대신 드리즐은 이렇게 가져옴
           // 이렇게 해야 유저 정보까지 가져올 수 있음.
           ...getTableColumns(videos),
           user: {
             ...getTableColumns(users),
+            // 사용자에 대한 정보를 보관하는 곳이니 여기다 추가
+            subscriberCount: db.$count(
+              subscriptions,
+              eq(subscriptions.creatorId, users.id)
+            ),
+            // sql 쿼리 사용해도됨
+            viewerSubscribed: isNotNull(viewerSubscriptions.viewerId).mapWith(
+              Boolean
+            ),
           },
           // videoViews 스키마에서 서브쿼리 가능
           // 서브쿼리로 사용하기에 이너조인 불필요
@@ -83,6 +100,10 @@ export const videosRouter = createTRPCRouter({
         .innerJoin(users, eq(videos.userId, users.id))
         // 사용자가 영상에 반응하지 않으면, 해당 레코드가 존재하지 않을 가능성이 있기 때문에 이를 위해 left join 활용
         .leftJoin(viewerReactions, eq(viewerReactions.videoId, videos.id))
+        .leftJoin(
+          viewerSubscriptions,
+          eq(viewerSubscriptions.creatorId, users.id)
+        )
         .where(eq(videos.id, input.id));
       // .groupBy(videos.id, users.id, viewerReactions.type);
 
