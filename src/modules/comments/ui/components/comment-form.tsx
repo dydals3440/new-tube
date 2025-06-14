@@ -22,12 +22,21 @@ import { DEFAULT_LIMIT } from '@/constants';
 interface CommentFormProps {
   videoId: string;
   onSuccess?: () => void;
+  onCancel?: () => void;
+  variant?: 'reply' | 'comment';
+  parentId?: string;
 }
 
 // commentFormSchema 분리 선언
 const commentFormSchema = commentInsertSchema.omit({ userId: true });
 
-export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
+export const CommentForm = ({
+  videoId,
+  onSuccess,
+  onCancel,
+  variant = 'comment',
+  parentId,
+}: CommentFormProps) => {
   const { user } = useUser();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -37,6 +46,7 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
   const form = useForm<z.infer<typeof commentFormSchema>>({
     resolver: zodResolver(commentFormSchema),
     defaultValues: {
+      parentId,
       videoId,
       value: '',
     },
@@ -45,16 +55,14 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
   const create = useMutation(
     trpc.comments.create.mutationOptions({
       onSuccess: () => {
-        const options = trpc.comments.getMany.infiniteQueryOptions(
-          {
-            videoId,
-            limit: DEFAULT_LIMIT,
-          },
-          {
-            getNextPageParam: (lastPage) => lastPage.nextCursor,
-          }
-        );
-        queryClient.invalidateQueries({ queryKey: options.queryKey });
+        Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.comments.getMany.queryKey({ videoId }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.comments.getMany.queryKey({ videoId, parentId }),
+          }),
+        ]);
 
         form.reset();
         toast.success('Comment created');
@@ -79,6 +87,11 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
     create.mutate(values);
   };
 
+  const handleCancel = () => {
+    form.reset();
+    onCancel?.();
+  };
+
   return (
     <Form {...form}>
       <form
@@ -99,7 +112,11 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
                 <FormControl>
                   <Textarea
                     {...field}
-                    placeholder='Add a comment...'
+                    placeholder={
+                      variant === 'reply'
+                        ? 'Reply to this comment...'
+                        : 'Add a comment...'
+                    }
                     className='resize-none bg-transparent overflow-hidden min-h-0'
                   />
                 </FormControl>
@@ -109,8 +126,13 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
           />
         </div>
         <div className='justify-end gap-2 mt-2 flex'>
+          {onCancel && (
+            <Button variant='ghost' size='sm' onClick={handleCancel}>
+              Cancel
+            </Button>
+          )}
           <Button type='submit' size='sm'>
-            Comment
+            {variant === 'reply' ? 'Reply' : 'Comment'}
           </Button>
         </div>
       </form>
