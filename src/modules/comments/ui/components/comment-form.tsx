@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { commentInsertSchema } from '@/db/schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { DEFAULT_LIMIT } from '@/constants';
 
 interface CommentFormProps {
   videoId: string;
@@ -47,6 +48,7 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
         queryClient.invalidateQueries(
           trpc.comments.getMany.queryOptions({
             videoId,
+            limit: DEFAULT_LIMIT,
           })
         );
         form.reset();
