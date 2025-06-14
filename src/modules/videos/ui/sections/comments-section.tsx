@@ -36,6 +36,7 @@ export const CommentsSection = ({ videoId }: CommentSectionProps) => {
 // comment section은 video view에 있기 떄문에, modules/videos 경로에 존재
 export const CommentsSectionSuspense = ({ videoId }: CommentSectionProps) => {
   const trpc = useTRPC();
+
   const {
     data: comments,
     hasNextPage,

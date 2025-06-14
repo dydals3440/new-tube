@@ -45,19 +45,23 @@ export const CommentForm = ({ videoId, onSuccess }: CommentFormProps) => {
   const create = useMutation(
     trpc.comments.create.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(
-          trpc.comments.getMany.queryOptions({
+        const options = trpc.comments.getMany.infiniteQueryOptions(
+          {
             videoId,
             limit: DEFAULT_LIMIT,
-          })
+          },
+          {
+            getNextPageParam: (lastPage) => lastPage.nextCursor,
+          }
         );
+        queryClient.invalidateQueries({ queryKey: options.queryKey });
+
         form.reset();
         toast.success('Comment created');
         onSuccess?.();
       },
       onError: (error) => {
         toast.error(error.message);
-
         if (error.data?.code === 'UNAUTHORIZED') {
           clerk.openSignIn();
         }

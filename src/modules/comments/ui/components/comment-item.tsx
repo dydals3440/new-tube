@@ -28,16 +28,17 @@ export const CommentItem = ({ comment }: CommentItemProps) => {
 
   const remove = useMutation(
     trpc.comments.remove.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.comments.getMany.queryKey({
-            videoId: comment.videoId,
-            limit: DEFAULT_LIMIT,
-          }),
-        });
+      onSuccess: async () => {
+        // ✅ 삭제 성공 시 invalidate
+        const options = trpc.comments.getMany.infiniteQueryOptions(
+          { videoId: comment.videoId, limit: DEFAULT_LIMIT },
+          { getNextPageParam: (lastPage) => lastPage.nextCursor }
+        );
+        queryClient.invalidateQueries({ queryKey: options.queryKey });
+        toast.success('Comment deleted');
       },
       onError: (error) => {
-        toast.error('Something Went Wrong');
+        toast.error('Something went wrong');
         if (error.data?.code === 'UNAUTHORIZED') {
           clerk.openSignIn();
         }
@@ -69,8 +70,8 @@ export const CommentItem = ({ comment }: CommentItemProps) => {
             </div>
           </Link>
           <p className='text-sm'>{comment.value}</p>
-          {/* TODO: Reactions */}
         </div>
+
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant='ghost' size='icon' className='size-8'>
