@@ -9,9 +9,15 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { VideoPlayer } from '@/modules/videos/ui/components/video-player';
+import {
+  VideoPlayer,
+  VideoPlayerSkeleton,
+} from '@/modules/videos/ui/components/video-player';
 import { VideoBanner } from '@/modules/videos/ui/components/video-banner';
-import { VideoTopRow } from '@/modules/videos/ui/components/video-top-row';
+import {
+  VideoTopRow,
+  VideoTopRowSkeleton,
+} from '@/modules/videos/ui/components/video-top-row';
 import { useAuth } from '@clerk/nextjs';
 
 interface VideoSectionProps {
@@ -23,11 +29,20 @@ interface VideoSectionProps {
 
 export const VideoSection = ({ videoId }: VideoSectionProps) => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<VideoSectionSkeleton />}>
       <ErrorBoundary fallback={<div>Error</div>}>
         <VideoSectionSuspense videoId={videoId} />
       </ErrorBoundary>
     </Suspense>
+  );
+};
+
+export const VideoSectionSkeleton = () => {
+  return (
+    <>
+      <VideoPlayerSkeleton />
+      <VideoTopRowSkeleton />
+    </>
   );
 };
 

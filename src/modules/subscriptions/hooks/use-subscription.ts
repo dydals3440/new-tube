@@ -1,4 +1,4 @@
-import { toast, useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useTRPC } from '@/trpc/client';
 import { useClerk } from '@clerk/nextjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
