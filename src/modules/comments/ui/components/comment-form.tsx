@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/form';
 import { commentInsertSchema } from '@/db/schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DEFAULT_LIMIT } from '@/constants';
 
 interface CommentFormProps {
   videoId: string;

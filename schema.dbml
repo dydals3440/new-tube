@@ -34,6 +34,7 @@ table comment_reactions {
 
 table comments {
   id uuid [pk, not null, default: `gen_random_uuid()`]
+  parent_id uuid
   user_id uuid [not null]
   video_id uuid [not null]
   value text [not null]
@@ -117,6 +118,8 @@ ref: comment_reactions.comment_id > comments.id
 ref: comments.user_id > users.id
 
 ref: comments.video_id > videos.id
+
+ref: comments.parent_id > comments.id
 
 ref: subscriptions.viewer_id > users.id
 
