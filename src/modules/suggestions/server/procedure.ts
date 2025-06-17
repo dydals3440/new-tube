@@ -1,7 +1,7 @@
 import { db } from '@/db';
 import { users, videoReactions, videos, videoViews } from '@/db/schema';
 import { baseProcedure, createTRPCRouter } from '@/trpc/init';
-import { and, desc, eq, getTableColumns, lt, or } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, lt, not, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
@@ -56,7 +56,9 @@ export const suggestionsRouter = createTRPCRouter({
         .innerJoin(users, eq(videos.userId, users.id))
         .where(
           and(
-            // 추천 카테고리 아이디가 동일한애를 보여주고, 없으면 그냥, 전체 데이트
+            not(eq(videos.id, existingVideo.id)),
+            eq(videos.visibility, 'public'),
+            // 추천 카테고리 아이디가 동일한애를 보여주고, 없으면 그냥, 전체 데이터를 보여줌
             existingVideo.categoryId
               ? eq(videos.categoryId, existingVideo.categoryId)
               : undefined,

@@ -24,6 +24,7 @@ import {
   RotateCcwIcon,
   SparkleIcon,
   TrashIcon,
+  RefreshCcwIcon,
 } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -58,6 +59,7 @@ import { THUMBNAIL_FALLBACK } from '@/modules/videos/constants';
 import { ThumbnailUploadModal } from '@/modules/studio/ui/components/thumbnail-upload-modal';
 import { ThumbnailGenerateModal } from '@/modules/studio/ui/components/thumbnail-generate-modal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { APP_URL } from '@/constants';
 
 interface FormSectionProps {
   videoId: string;
@@ -181,6 +183,27 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
     })
   );
 
+  const revalidate = useMutation(
+    trpc.videos.revalidate.mutationOptions({
+      onSuccess: () => {
+        Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.studio.getMany.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.studio.getOne.queryKey({
+              id: videoId,
+            }),
+          }),
+        ]);
+        toast.success('Video revalidated successfully');
+      },
+      onError: () => {
+        toast.error('Failed to revalidate video');
+      },
+    })
+  );
+
   const restoreThumbnail = useMutation(
     trpc.videos.restoreThumbnail.mutationOptions({
       onSuccess: () => {
@@ -234,9 +257,7 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
   };
 
   // TODO: Change If deploying outide of vercel
-  const fullUrl = `${
-    process.env.VERCEL_URL || 'http://localhost:3000'
-  }/videos/${videoId}`;
+  const fullUrl = `${APP_URL || 'http://localhost:3000'}/videos/${videoId}`;
   const [isCopied, setIsCopied] = useState(false);
 
   const onCopy = async () => {
@@ -286,6 +307,13 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                   >
                     <TrashIcon className='size-4 mr-2' />
                     Delete
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => revalidate.mutate({ id: videoId })}
+                    disabled={revalidate.isPending}
+                  >
+                    <RefreshCcwIcon className='size-4 mr-2' />
+                    Revalidate
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
