@@ -1,14 +1,15 @@
-import { db } from '@/db';
-import { users, videoReactions, videos, videoViews } from '@/db/schema';
-import { baseProcedure, createTRPCRouter } from '@/trpc/init';
-import { and, desc, eq, getTableColumns, ilike, lt, or } from 'drizzle-orm';
 import { z } from 'zod';
+import { eq, and, or, lt, desc, ilike, getTableColumns } from 'drizzle-orm';
+
+import { db } from '@/db';
+import { baseProcedure, createTRPCRouter } from '@/trpc/init';
+import { users, videoReactions, videos, videoViews } from '@/db/schema';
 
 export const searchRouter = createTRPCRouter({
   getMany: baseProcedure
     .input(
       z.object({
-        query: z.string().optional(),
+        query: z.string().nullish(),
         categoryId: z.string().uuid().nullish(),
         cursor: z
           .object({
@@ -46,9 +47,8 @@ export const searchRouter = createTRPCRouter({
         .innerJoin(users, eq(videos.userId, users.id))
         .where(
           and(
-            query && query.trim()
-              ? ilike(videos.title, `%${query}%`)
-              : undefined,
+            eq(videos.visibility, 'public'),
+            ilike(videos.title, `%${query}%`),
             categoryId ? eq(videos.categoryId, categoryId) : undefined,
             cursor
               ? or(
@@ -62,10 +62,13 @@ export const searchRouter = createTRPCRouter({
           )
         )
         .orderBy(desc(videos.updatedAt), desc(videos.id))
+        // Add 1 to the limit to check if there is more data
         .limit(limit + 1);
 
       const hasMore = data.length > limit;
+      // Remove the last item if there is more data
       const items = hasMore ? data.slice(0, -1) : data;
+      // Set the next cursor to the last item if there is more data
       const lastItem = items[items.length - 1];
       const nextCursor = hasMore
         ? {

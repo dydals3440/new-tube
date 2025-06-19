@@ -19,10 +19,7 @@ export const SearchInput = () => {
     e.preventDefault();
 
     // window.location.origin // nextjs not recommended
-    const url = new URL(
-      '/search',
-      APP_URL ? `https://${APP_URL}` : 'http://localhost:3000'
-    );
+    const url = new URL('/search', APP_URL);
     const newQuery = value.trim();
 
     url.searchParams.set('query', encodeURIComponent(newQuery));

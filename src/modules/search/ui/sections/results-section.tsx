@@ -69,8 +69,6 @@ export const ResultsSectionSuspense = ({
     )
   );
 
-  console.log(results.data.pages);
-
   const isMobile = useIsMobile();
 
   return (
